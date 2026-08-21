@@ -1,0 +1,32 @@
+{
+  "name": "@drydock/bun",
+  "version": "0.1.0",
+  "description": "Bun TypeScript module resolution and explicit reload for Drydock plugins.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./test"
+  },
+  "dependencies": {
+    "@drydock/loader": "workspace:*"
+  },
+  "devDependencies": {
+    "@drydock/core": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "license": "MIT"
+}

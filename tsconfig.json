@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@drydock/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@drydock/events": [
+        "./packages/events/src/index.ts"
+      ],
+      "@drydock/logger": [
+        "./packages/logger/src/index.ts"
+      ],
+      "@drydock/loader": [
+        "./packages/loader/src/index.ts"
+      ],
+      "@drydock/bun": [
+        "./packages/bun/src/index.ts"
+      ],
+      "@drydock/timer": [
+        "./packages/timer/src/index.ts"
+      ]
+    },
+    "types": [
+      "bun"
+    ],
+    "skipLibCheck": true
+  }
+}

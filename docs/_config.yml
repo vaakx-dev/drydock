@@ -1,0 +1,10 @@
+title: Drydock
+description: A small TypeScript runtime for scoped services and plugins.
+theme: minima
+show_excerpts: false
+header_pages:
+  - api/index.md
+  - model.md
+  - lifecycle.md
+  - packages.md
+  - boundaries.md

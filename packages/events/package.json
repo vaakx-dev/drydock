@@ -1,0 +1,29 @@
+{
+  "name": "@drydock/events",
+  "version": "0.1.0",
+  "description": "Typed lifecycle-owned events for Drydock.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./test"
+  },
+  "dependencies": {
+    "@drydock/core": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "drydock",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter @drydock/core build && bun run --filter @drydock/events build && bun run --filter @drydock/loader build && bun run --filter @drydock/bun build && bun run --filter @drydock/logger build && bun run --filter @drydock/timer build",
+    "check:source": "bun scripts/check_source.mjs",
+    "typecheck": "bun run --sequential --workspaces --if-present typecheck",
+    "test": "bun run --sequential --workspaces --if-present test",
+    "check": "bun run check:source && bun run typecheck && bun run test && bun run build && bun run check:source",
+    "example": "bun run examples/basic.ts && bun run examples/bun_host.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.0",
+    "typescript": "^7.0.2"
+  }
+}
