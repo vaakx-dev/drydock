@@ -1,3 +1,3 @@
 # @drydock/loader
 
-Declarative plugin loading and replacement for Drydock.
+Declarative plugin loading, replacement, and explicit reload capability for Drydock.

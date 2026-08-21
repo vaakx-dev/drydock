@@ -10,8 +10,10 @@ export {
   Context,
   DuplicateServiceError,
   ServiceMissingError,
+  type ServiceSnapshot,
   type ServiceProvider,
 } from "./context.js";
+export { inspect, type RuntimeSnapshot } from "./inspection.js";
 export { token, type Token } from "./token.js";
 export {
   ConfigValidationError,

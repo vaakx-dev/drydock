@@ -23,6 +23,7 @@ import {
   validateEntries,
   withoutConfig,
 } from "./configuration.js";
+import { ReloadUnsupportedError } from "./errors.js";
 import { Observers } from "./observers.js";
 import type {
   LoaderConfig,
@@ -31,7 +32,9 @@ import type {
   PluginEntry,
   PluginGroup,
   PluginResolver,
+  ReloadablePluginResolver,
 } from "./types.js";
+import { isReloadablePluginResolver } from "./types.js";
 
 export class Loader {
   readonly #observers = new Observers<LoaderState>();
@@ -59,6 +62,10 @@ export class Loader {
 
   get entries(): readonly PluginEntry[] {
     return copyEntries(this.#entries ?? []);
+  }
+
+  get supportsReload(): boolean {
+    return isReloadablePluginResolver(this.resolve);
   }
 
   subscribe(
@@ -124,14 +131,14 @@ export class Loader {
   async #reloadAll(entries: readonly PluginEntry[] | undefined): Promise<LoaderSnapshot> {
     if (this.#closed) throw new Error("loader is closed");
     if (!entries) throw new Error("loader has no configuration to reload");
-    if (!this.resolve.invalidate) throw new Error("plugin resolver does not support reload");
+    const resolver = this.#reloadResolver();
     validateEntries(entries);
 
     try {
       const specifiers = new Set(entries
         .filter((entry) => !entry.disabled)
         .map((entry) => entry.use));
-      for (const specifier of specifiers) await this.resolve.invalidate(specifier);
+      for (const specifier of specifiers) await resolver.invalidate(specifier);
     } catch (error) {
       this.#setState({ status: "failed", error, snapshot: snapshotOf(this.#generation) });
       throw error;
@@ -143,7 +150,7 @@ export class Loader {
   async #reloadEntry(id: string): Promise<LoaderSnapshot> {
     if (this.#closed) throw new Error("loader is closed");
     if (!this.#entries) throw new Error("loader has no configuration to reload");
-    if (!this.resolve.invalidate) throw new Error("plugin resolver does not support reload");
+    const resolver = this.#reloadResolver();
     const entry = this.#entries.find((candidate) => candidate.id === id && !candidate.disabled);
     if (!entry) throw new Error(`plugin entry is not active: ${id}`);
     const index = this.#generation.findIndex((candidate) => candidate.entry.id === id);
@@ -152,7 +159,7 @@ export class Loader {
 
     let definition: Definition;
     try {
-      await this.resolve.invalidate(entry.use);
+      await resolver.invalidate(entry.use);
       definition = { entry, plugin: await this.resolve(entry.use) };
       validateDefinition(definition);
     } catch (error) {
@@ -460,6 +467,11 @@ export class Loader {
     const result = this.#queue.then(operation);
     this.#queue = result.then(() => undefined, () => undefined);
     return result;
+  }
+
+  #reloadResolver(): ReloadablePluginResolver {
+    if (!isReloadablePluginResolver(this.resolve)) throw new ReloadUnsupportedError();
+    return this.resolve;
   }
 
   #setState(state: LoaderState): void {

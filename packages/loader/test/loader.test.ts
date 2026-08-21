@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { Context, definePlugin, registry, token, type Plugin } from "@drydock/core";
 
-import { Loader } from "../src/index.js";
+import { Loader, ReloadUnsupportedError } from "../src/index.js";
 
 test("a loader composes declarative entries through a resolver", async () => {
   const context = Context.create();
@@ -33,6 +33,23 @@ test("a loader composes declarative entries through a resolver", async () => {
 
   assert.deepEqual(snapshot.entries.map((entry) => entry.state.status), ["active", "active"]);
   assert.deepEqual(events, ["loaded:ready"]);
+  await loader.close();
+  await context.dispose();
+});
+
+test("a loader reports when its resolver cannot reload", async () => {
+  const context = Context.create();
+  const loader = new Loader(context, () => definePlugin({
+    name: "static",
+    setup() {},
+  }));
+
+  await loader.load([{ id: "static", use: "static" }]);
+
+  assert.equal(loader.supportsReload, false);
+  await assert.rejects(loader.reload(), ReloadUnsupportedError);
+  assert.equal(loader.state.status, "active");
+
   await loader.close();
   await context.dispose();
 });

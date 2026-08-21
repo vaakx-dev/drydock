@@ -13,6 +13,7 @@ This reference covers the exports available from each package root. Internal mod
 - [`@drydock/events`](events/): typed event names, listeners, dispatch, and filters.
 - [`@drydock/loader`](loader/): declarative plugin configuration and generation management.
 - [`@drydock/bun`](bun/): a Bun-backed plugin resolver with explicit invalidation.
+- [`@drydock/hmr`](hmr/): file watching and lifecycle-aware plugin reloads.
 - [`@drydock/logger`](logger/): log levels, records, sinks, and child fields.
 - [`@drydock/timer`](timer/): context-owned timer operations.
 

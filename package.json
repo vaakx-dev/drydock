@@ -7,14 +7,20 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "bun run --filter @drydock/core build && bun run --filter @drydock/events build && bun run --filter @drydock/loader build && bun run --filter @drydock/bun build && bun run --filter @drydock/logger build && bun run --filter @drydock/timer build",
+    "build": "bun run --filter @drydock/core build && bun run --filter @drydock/events build && bun run --filter @drydock/loader build && bun run --filter @drydock/hmr build && bun run --filter @drydock/bun build && bun run --filter @drydock/logger build && bun run --filter @drydock/timer build",
     "check:source": "bun scripts/check_source.mjs",
+    "check:packages": "bun scripts/check_packages.mjs",
     "typecheck": "bun run --sequential --workspaces --if-present typecheck",
     "test": "bun run --sequential --workspaces --if-present test",
-    "check": "bun run check:source && bun run typecheck && bun run test && bun run build && bun run check:source",
+    "coverage": "bun test --coverage --coverage-reporter=text --coverage-dir=.tmp/coverage ./packages",
+    "check": "bun run check:source && bun run typecheck && bun run test && bun run build && bun run check:packages && bun run check:source",
+    "ci": "bun run check && bun run coverage && bun run example",
+    "version": "changeset version",
+    "publish": "bun run build && changeset publish",
     "example": "bun run examples/basic.ts && bun run examples/bun_host.ts"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@types/bun": "1.4.0",
     "typescript": "^7.0.2"
   }

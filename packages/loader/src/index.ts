@@ -1,4 +1,5 @@
 export { Loader } from "./loader.js";
+export { ReloadUnsupportedError } from "./errors.js";
 export type {
   LoadedEntry,
   LoaderConfig,
@@ -7,4 +8,6 @@ export type {
   PluginEntry,
   PluginGroup,
   PluginResolver,
+  ReloadablePluginResolver,
 } from "./types.js";
+export { isReloadablePluginResolver } from "./types.js";

@@ -4,8 +4,10 @@ import test from "node:test";
 import {
   Context,
   definePlugin,
+  inspect,
   mount,
   registry,
+  token,
 } from "../src/index.js";
 
 test("a registry tracks every mount and reusable plugin instance", async () => {
@@ -41,6 +43,40 @@ test("a registry tracks every mount and reusable plugin instance", async () => {
   assert.equal(plugins.size, 1);
   await context.dispose();
   assert.equal(plugins.size, 0);
+});
+
+test("runtime inspection combines visible services and mounted plugins", async () => {
+  const context = Context.create();
+  const dependency = token<string>("dependency");
+  const optional = token<string>("optional");
+  const service = token<string>("service");
+  context.provide(dependency, "ready");
+  const mounted = mount(context, definePlugin({
+    name: "inspected",
+    requires: [dependency],
+    optional: [optional],
+    setup(current) {
+      current.provide(service, "value");
+    },
+  }));
+  await mounted.settled();
+
+  const snapshot = inspect(context);
+
+  assert.deepEqual(snapshot.services.map(({ token: current, owner }) => [current.name, owner]), [
+    ["dependency", undefined],
+    ["service", "inspected"],
+  ]);
+  assert.deepEqual(snapshot.plugins.map(({ name, requires, optional: optionalServices, state }) => [
+    name,
+    requires.map((current) => current.name),
+    optionalServices.map((current) => current.name),
+    state.status,
+  ]), [
+    ["inspected", ["dependency"], ["optional"], "active"],
+  ]);
+
+  await context.dispose();
 });
 
 test("plugins mounted from a plugin context are nested in its lifetime", async () => {

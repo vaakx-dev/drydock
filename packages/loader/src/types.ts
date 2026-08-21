@@ -37,3 +37,13 @@ export interface PluginResolver {
   (specifier: string): Plugin<unknown> | Promise<Plugin<unknown>>;
   readonly invalidate?: (specifier: string) => void | Promise<void>;
 }
+
+export interface ReloadablePluginResolver extends PluginResolver {
+  readonly invalidate: (specifier: string) => void | Promise<void>;
+}
+
+export function isReloadablePluginResolver(
+  resolver: PluginResolver,
+): resolver is ReloadablePluginResolver {
+  return typeof resolver.invalidate === "function";
+}

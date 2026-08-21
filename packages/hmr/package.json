@@ -1,0 +1,29 @@
+{
+  "name": "@drydock/hmr",
+  "version": "0.1.0",
+  "description": "File watching and lifecycle-aware plugin reloads for Drydock.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./test"
+  },
+  "dependencies": {
+    "@drydock/loader": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "license": "MIT"
+}

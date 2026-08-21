@@ -23,6 +23,9 @@
       "@drydock/bun": [
         "./packages/bun/src/index.ts"
       ],
+      "@drydock/hmr": [
+        "./packages/hmr/src/index.ts"
+      ],
       "@drydock/timer": [
         "./packages/timer/src/index.ts"
       ]

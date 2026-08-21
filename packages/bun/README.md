@@ -1,3 +1,3 @@
 # @drydock/bun
 
-Bun module resolution and plugin reloads for Drydock.
+Bun module resolution, dependency tracking, and fresh bundle evaluation for Drydock plugin reloads.

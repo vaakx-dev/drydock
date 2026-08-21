@@ -42,6 +42,8 @@ class Scope {
 ```ts
 interface ServiceProvider<T> {
   readonly token: Token<T>
+  readonly id: number
+  readonly owner?: string
   readonly available: boolean
   replace(value: T): void
   suspend(): void
@@ -53,6 +55,7 @@ class Context {
   readonly signal: AbortSignal
   readonly state: ScopeState
   readonly effects: readonly EffectSnapshot[]
+  readonly services: readonly ServiceSnapshot[]
   static create(): Context
   child(): Context
   isolate(...services: readonly Token<unknown>[]): Context
@@ -63,6 +66,18 @@ class Context {
   effect(cleanup: Cleanup, label?: string): Dispose
   cancel(reason?: unknown): void
   dispose(reason?: unknown): Promise<void>
+}
+```
+
+`services` is an inspection-safe view of the providers visible from the context. It includes provider identity, optional plugin owner, token, availability, and revision, but never exposes service values.
+
+```ts
+interface ServiceSnapshot {
+  readonly id: number
+  readonly owner?: string
+  readonly token: Token<unknown>
+  readonly available: boolean
+  readonly revision: number
 }
 ```
 
@@ -118,6 +133,17 @@ interface MountedPlugin<Input = unknown> {
   update(config: Input): Promise<void>
   dispose(reason?: unknown): Promise<void>
 }
+```
+
+`inspect(context)` combines the context's visible services with the shared registry's mounted-plugin snapshot.
+
+```ts
+interface RuntimeSnapshot {
+  readonly services: readonly ServiceSnapshot[]
+  readonly plugins: readonly RegisteredPlugin[]
+}
+
+function inspect(context: Context): RuntimeSnapshot
 ```
 
 ```ts
@@ -185,6 +211,8 @@ function registry(context: Context): Registry
 interface RegisteredPlugin {
   readonly id: number
   readonly name: string
+  readonly requires: readonly Token<unknown>[]
+  readonly optional: readonly Token<unknown>[]
   readonly state: MountState
   readonly effects: readonly EffectSnapshot[]
 }

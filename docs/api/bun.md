@@ -26,6 +26,7 @@ interface BunResolverOptions {
 interface BunResolver {
   (specifier: string): Promise<Plugin<unknown>>
   invalidate(specifier: string): void
+  dependencies(specifier: string): readonly string[]
 }
 ```
 
@@ -35,4 +36,4 @@ interface BunResolver {
 function bunResolver(options?: BunResolverOptions): BunResolver
 ```
 
-The resolver bundles plugin-local imports with `Bun.build()`, keeps package imports external, and caches each resolved module until `invalidate()` is called.
+The resolver bundles plugin-local imports with `Bun.build()`, keeps package imports external, and caches each resolved module until `invalidate()` is called. Each bundle is evaluated through a fresh CommonJS factory, so local plugin module state is not retained in a growing `data:` module cache. External packages still use the host resolver and their normal package cache. `dependencies()` returns the absolute source files captured by the last successful bundle. Hosts can use that graph to watch source files and reload affected plugins.

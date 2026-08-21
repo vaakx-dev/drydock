@@ -56,6 +56,30 @@ test("invalidation reloads a plugin's local TypeScript dependencies", async () =
   }
 });
 
+test("the resolver reports bundled source dependencies", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "drydock-bun-"));
+  const module = join(directory, "plugin.ts");
+  const value = join(directory, "value.ts");
+  try {
+    await writeFile(value, "export const name = \"first\";\n", "utf8");
+    await writeFile(module, [
+      "import { name } from \"./value.ts\";",
+      "export default { name, setup() {} };",
+      "",
+    ].join("\n"), "utf8");
+    const resolve = bunResolver({ from: pathToFileURL(join(directory, "host.ts")) });
+
+    await resolve("./plugin.ts");
+
+    assert.deepEqual(
+      new Set(resolve.dependencies("./plugin.ts")),
+      new Set([module, value]),
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("a Bun resolver rejects a module without a plugin export", async () => {
   const directory = await mkdtemp(join(tmpdir(), "drydock-bun-"));
   const module = join(directory, "plugin.ts");

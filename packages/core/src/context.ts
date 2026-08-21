@@ -9,6 +9,8 @@ import {
 import type { Token } from "./token.js";
 
 interface ProviderEntry<T> {
+  readonly id: number;
+  readonly owner?: string;
   active: boolean;
   available: boolean;
   revision: number;
@@ -28,6 +30,13 @@ interface Node {
 
 class World {
   readonly listeners = new Map<Token<unknown>, Set<() => void>>();
+  #nextProviderId = 1;
+
+  nextProviderId(): number {
+    const id = this.#nextProviderId;
+    this.#nextProviderId += 1;
+    return id;
+  }
 
   changed(service: Token<unknown>): void {
     for (const listener of this.listeners.get(service) ?? []) listener();
@@ -52,12 +61,22 @@ class World {
 const CONTEXT_INTERNAL = Symbol("drydock.context.internal");
 
 export interface ServiceProvider<T> {
+  readonly id: number;
+  readonly owner?: string;
   readonly token: Token<T>;
   readonly available: boolean;
   replace(value: T): void;
   suspend(): void;
   resume(): void;
   dispose(): Promise<void>;
+}
+
+export interface ServiceSnapshot {
+  readonly id: number;
+  readonly owner?: string;
+  readonly token: Token<unknown>;
+  readonly available: boolean;
+  readonly revision: number;
 }
 
 export class ServiceMissingError extends Error {
@@ -78,7 +97,11 @@ export class Context {
   readonly #node: Node;
   readonly #scope: Scope;
 
-  private constructor(node: Node, scope: Scope) {
+  private constructor(
+    node: Node,
+    scope: Scope,
+    private readonly owner?: string,
+  ) {
     this.#node = node;
     this.#scope = scope;
   }
@@ -93,6 +116,10 @@ export class Context {
 
   get effects(): readonly EffectSnapshot[] {
     return this.#scope.effects;
+  }
+
+  get services(): readonly ServiceSnapshot[] {
+    return visibleServices(this.#node);
   }
 
   effect(cleanup: Cleanup, label?: string): Dispose {
@@ -131,7 +158,7 @@ export class Context {
     scope.own(() => {
       node.attached = false;
     });
-    return new Context(node, scope);
+    return new Context(node, scope, this.owner);
   }
 
   provide<T>(service: Token<T>, value: T): ServiceProvider<T> {
@@ -139,7 +166,14 @@ export class Context {
       throw new DuplicateServiceError(service as Token<unknown>);
     }
 
-    const entry: ProviderEntry<T> = { active: true, available: true, revision: 0, value };
+    const entry: ProviderEntry<T> = {
+      id: this.#node.world.nextProviderId(),
+      ...(this.owner === undefined ? {} : { owner: this.owner }),
+      active: true,
+      available: true,
+      revision: 0,
+      value,
+    };
     const assertActive = () => {
       if (!entry.active || this.#scope.state !== "open") throw new ScopeClosedError();
     };
@@ -156,6 +190,8 @@ export class Context {
     this.#node.world.changed(service as Token<unknown>);
 
     return {
+      id: entry.id,
+      ...(entry.owner === undefined ? {} : { owner: entry.owner }),
       token: service,
       get available() {
         return entry.active && entry.available;
@@ -208,7 +244,7 @@ export class Context {
   [CONTEXT_INTERNAL](): ContextInternals {
     return {
       identity: this.#node.world,
-      bind: (scope) => new Context(this.#node, scope),
+      bind: (scope, owner) => new Context(this.#node, scope, owner),
       observe: (services, listener) => this.#node.world.observe(services, listener),
       resolve: (services) => services.map((service): ServiceResolution => {
         const resolved = resolve(this.#node, service);
@@ -236,6 +272,44 @@ interface ResolvedService {
   readonly interceptors: readonly ServiceInterceptor[];
 }
 
+function visibleServices(node: Node): ServiceSnapshot[] {
+  const tokens = new Set<Token<unknown>>();
+  for (let current: Node | undefined = node; current?.attached; current = current.parent) {
+    for (const [service, entry] of current.providers) {
+      if (entry.active) tokens.add(service);
+    }
+  }
+
+  return [...tokens].flatMap((service) => {
+    const entry = visibleProvider(node, service);
+    return entry
+      ? [{
+        id: entry.id,
+        ...(entry.owner === undefined ? {} : { owner: entry.owner }),
+        token: service,
+        available: entry.available,
+        revision: entry.revision,
+      }]
+      : [];
+  });
+}
+
+function visibleProvider(
+  node: Node,
+  service: Token<unknown>,
+): ProviderEntry<unknown> | undefined {
+  let suspended: ProviderEntry<unknown> | undefined;
+  for (let current: Node | undefined = node; current?.attached; current = current.parent) {
+    const entry = current.providers.get(service);
+    if (entry?.active) {
+      if (entry.available) return entry;
+      suspended ??= entry;
+    }
+    if (current.isolated.has(service)) return suspended;
+  }
+  return suspended;
+}
+
 function resolve(node: Node, service: Token<unknown>): ResolvedService | undefined {
   const interceptors: ServiceInterceptor[] = [];
   for (let current: Node | undefined = node; current?.attached; current = current.parent) {
@@ -254,7 +328,7 @@ export type ServiceResolution =
 
 interface ContextInternals {
   readonly identity: object;
-  bind(scope: Scope): Context;
+  bind(scope: Scope, owner?: string): Context;
   observe(services: readonly Token<unknown>[], listener: () => void): Dispose;
   resolve(services: readonly Token<unknown>[]): ServiceResolution[];
 }
@@ -263,8 +337,8 @@ export function contextIdentity(context: Context): object {
   return context[CONTEXT_INTERNAL]().identity;
 }
 
-export function bindContext(context: Context, scope: Scope): Context {
-  return context[CONTEXT_INTERNAL]().bind(scope);
+export function bindContext(context: Context, scope: Scope, owner?: string): Context {
+  return context[CONTEXT_INTERNAL]().bind(scope, owner);
 }
 
 export function observeServices(

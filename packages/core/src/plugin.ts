@@ -294,7 +294,10 @@ class PluginMount<Config, Input> implements MountedPlugin<Input> {
         this.#dirty = true;
         return;
       }
-      const cleanup = await this.plugin.setup(bindContext(this.context, scope), config);
+      const cleanup = await this.plugin.setup(
+        bindContext(this.context, scope, this.plugin.name),
+        config,
+      );
       if (cleanup) scope.own(cleanup);
       const current = resolveServices(this.context, this.#requirements, this.#optional);
       if (

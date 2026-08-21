@@ -2,6 +2,7 @@ import { contextIdentity, type Context } from "./context.js";
 import type { MountedPlugin, MountState, Plugin } from "./plugin.js";
 import { Observers } from "./observers.js";
 import type { EffectSnapshot } from "./scope.js";
+import type { Token } from "./token.js";
 
 interface Runtime {
   readonly id: number;
@@ -13,6 +14,8 @@ interface Runtime {
 export interface RegisteredPlugin {
   readonly id: number;
   readonly name: string;
+  readonly requires: readonly Token<unknown>[];
+  readonly optional: readonly Token<unknown>[];
   readonly state: MountState;
   readonly effects: readonly EffectSnapshot[];
 }
@@ -53,9 +56,11 @@ class RuntimeRegistry implements Registry {
 
   get snapshot(): RegistrySnapshot {
     return {
-      plugins: [...this.#runtimes.values()].map(({ id, mounted }) => ({
+      plugins: [...this.#runtimes.values()].map(({ id, mounted, plugin }) => ({
         id,
         name: mounted.name,
+        requires: plugin.requires ?? [],
+        optional: plugin.optional ?? [],
         state: mounted.state,
         effects: mounted.effects,
       })),

@@ -1,0 +1,9 @@
+{
+  "@drydock/bun": ["bunResolver", "BunResolver", "BunResolverOptions"],
+  "@drydock/core": ["Context", "Scope", "definePlugin", "mount", "registry", "inspect", "token"],
+  "@drydock/events": ["Events", "EventListener", "EventName", "EventOptions", "EventSnapshot"],
+  "@drydock/hmr": ["watch", "FilePath", "HmrFailure", "HmrFailurePhase", "HmrOptions", "HmrState", "HmrWatcher"],
+  "@drydock/loader": ["Loader", "ReloadUnsupportedError", "LoadedEntry", "LoaderConfig", "LoaderSnapshot", "LoaderState", "PluginEntry", "PluginGroup", "PluginResolver", "ReloadablePluginResolver", "isReloadablePluginResolver"],
+  "@drydock/logger": ["LOGGER", "createLogger", "consoleSink", "LogFields", "Logger", "LoggerOptions", "LogLevel", "LogRecord", "LogSink", "ConsoleOutput"],
+  "@drydock/timer": ["TimerCancelledError", "interval", "sleep", "timeout"]
+}

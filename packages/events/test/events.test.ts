@@ -21,14 +21,18 @@ test("listeners follow context lifetime and deterministic order", async () => {
   events.on(root, "message", (value) => values.push(`root:${value}`));
   events.on(child, "message", (value) => values.push(`child:${value}`), { prepend: true });
 
+  assert.deepEqual(events.snapshot, [{ name: "message", listenerCount: 2 }]);
+
   events.emit("message", "first");
   await child.dispose();
   events.emit("message", "second");
 
   assert.deepEqual(values, ["child:first", "root:first", "root:second"]);
   assert.equal(events.listenerCount("message"), 1);
+  assert.deepEqual(events.snapshot, [{ name: "message", listenerCount: 1 }]);
   await root.dispose();
   assert.equal(events.listenerCount("message"), 0);
+  assert.deepEqual(events.snapshot, []);
 });
 
 test("one-shot listeners remove themselves before dispatch", async () => {

@@ -44,6 +44,11 @@ export interface EventOptions {
   readonly filter?: (source: Context | undefined) => boolean;
 }
 
+export interface EventSnapshot {
+  readonly name: PropertyKey;
+  readonly listenerCount: number;
+}
+
 export class Events<Schema extends object> {
   readonly #listeners = new Map<PropertyKey, ListenerEntry[]>();
 
@@ -186,6 +191,13 @@ export class Events<Schema extends object> {
 
   listenerCount<Name extends EventName<Schema>>(name: Name): number {
     return this.#listeners.get(name)?.length ?? 0;
+  }
+
+  get snapshot(): readonly EventSnapshot[] {
+    return [...this.#listeners].map(([name, listeners]) => ({
+      name,
+      listenerCount: listeners.length,
+    }));
   }
 
   #snapshot(name: PropertyKey, source: Context | undefined): readonly Listener[] {

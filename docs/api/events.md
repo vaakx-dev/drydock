@@ -77,8 +77,18 @@ class Events<Schema extends object> {
   ): ReturnType<EventListener<Schema, Name>>
 
   listenerCount<Name extends EventName<Schema>>(name: Name): number
+  readonly snapshot: readonly EventSnapshot[]
 }
 ```
+
+```ts
+interface EventSnapshot {
+  readonly name: PropertyKey
+  readonly listenerCount: number
+}
+```
+
+`snapshot` reports event names that currently have listeners and their listener counts. It does not expose listener functions or event payloads.
 
 `emit()` dispatches synchronously to every matching listener. `parallel()` waits for all listeners and aggregates failures. `bail()` returns the first meaningful synchronous result. `serial()` awaits listeners and stops at the first meaningful result. `waterfall()` composes middleware around a fallback.
 

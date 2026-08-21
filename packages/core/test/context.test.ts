@@ -41,6 +41,38 @@ test("providers can replace values without changing their identity", async () =>
   await context.dispose();
 });
 
+test("contexts expose an inspection-safe view of visible services", async () => {
+  const root = Context.create();
+  const inherited = token<string>("inherited");
+  const local = token<string>("local");
+  const suspended = token<string>("suspended");
+  const inheritedProvider = root.provide(inherited, "root");
+  const child = root.child();
+  const localProvider = child.provide(local, "child");
+  const suspendedProvider = root.provide(suspended, "paused");
+
+  suspendedProvider.suspend();
+
+  assert.deepEqual(
+    child.services.map(({ token: service, id, available, revision }) => ({
+      name: service.name,
+      id,
+      available,
+      revision,
+    })),
+    [
+      { name: "local", id: localProvider.id, available: true, revision: 0 },
+      { name: "inherited", id: inheritedProvider.id, available: true, revision: 0 },
+      { name: "suspended", id: suspendedProvider.id, available: false, revision: 0 },
+    ],
+  );
+
+  inheritedProvider.replace("updated");
+  assert.equal(child.services.find(({ token: service }) => service === inherited)?.revision, 1);
+
+  await root.dispose();
+});
+
 test("a context allows one local provider for each token", async () => {
   const context = Context.create();
   const service = token<object>("service");

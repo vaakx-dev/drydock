@@ -48,6 +48,14 @@ interface PluginResolver {
   (specifier: string): Plugin<unknown> | Promise<Plugin<unknown>>
   readonly invalidate?: (specifier: string) => void | Promise<void>
 }
+
+interface ReloadablePluginResolver extends PluginResolver {
+  readonly invalidate: (specifier: string) => void | Promise<void>
+}
+
+function isReloadablePluginResolver(
+  resolver: PluginResolver,
+): resolver is ReloadablePluginResolver
 ```
 
 ## Loader
@@ -57,6 +65,7 @@ class Loader {
   constructor(context: Context, resolve: PluginResolver)
   readonly state: LoaderState
   readonly entries: readonly PluginEntry[]
+  readonly supportsReload: boolean
   subscribe(listener: (state: LoaderState) => void, onError?: (error: unknown) => void): () => void
   load(config: readonly LoaderConfig[]): Promise<LoaderSnapshot>
   set(entry: PluginEntry): Promise<LoaderSnapshot>
@@ -69,6 +78,8 @@ class Loader {
 ```
 
 `load()` replaces the configured generation. `set()` changes one entry. `setGroup()` replaces the entries in one group. `reload()` invalidates supported resolvers before replacement. `unload()` removes one entry. `close()` disposes the loader and its active generation.
+
+`ReloadUnsupportedError` is thrown when `reload()` is requested from a resolver without `invalidate()`.
 
 Activation failures leave the previous generation in place when rollback succeeds. Loader operations are serialized, and state subscriptions are observational.
 
