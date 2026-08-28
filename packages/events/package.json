@@ -1,6 +1,6 @@
 {
   "name": "@drydock/events",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed lifecycle-owned events for Drydock.",
   "type": "module",
   "sideEffects": false,

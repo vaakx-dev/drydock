@@ -1,6 +1,6 @@
 {
   "name": "@drydock/logger",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Structured contextual logging for Drydock.",
   "type": "module",
   "sideEffects": false,

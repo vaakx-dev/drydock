@@ -1,6 +1,6 @@
 {
   "name": "@drydock/timer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lifecycle-owned timers for Drydock contexts.",
   "type": "module",
   "sideEffects": false,
