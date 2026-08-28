@@ -25,6 +25,15 @@ export interface Plugin<Config = undefined, Input = Config> {
   setup(context: Context, config: Config): Cleanup | void | Promise<Cleanup | void>;
 }
 
+export function isPlugin(value: unknown): value is Plugin<unknown> {
+  return typeof value === "object"
+    && value !== null
+    && "name" in value
+    && typeof value.name === "string"
+    && "setup" in value
+    && typeof value.setup === "function";
+}
+
 export type MountState =
   | { readonly status: "waiting"; readonly missing: readonly Token<unknown>[] }
   | { readonly status: "starting" }
@@ -52,7 +61,7 @@ interface Activation {
   readonly services: readonly ServiceResolution[];
 }
 
-const definitions = new WeakMap<object, Plugin<any, any>>();
+const definitions = new WeakMap<object, Plugin<unknown>>();
 
 export function definePlugin<Config, Input = Config>(
   plugin: Plugin<Config, Input>,
@@ -72,8 +81,8 @@ export function definePlugin<Config, Input = Config>(
     requires: Object.freeze([...requirements]),
     optional: Object.freeze([...optional]),
   });
-  definitions.set(plugin, definition);
-  definitions.set(definition, definition);
+  definitions.set(plugin, definition as Plugin<unknown>);
+  definitions.set(definition, definition as Plugin<unknown>);
   return definition;
 }
 

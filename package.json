@@ -13,8 +13,9 @@
     "typecheck": "bun run --sequential --workspaces --if-present typecheck",
     "test": "bun run --sequential --workspaces --if-present test",
     "coverage": "bun test --coverage --coverage-reporter=text --coverage-dir=.tmp/coverage ./packages",
-    "check": "bun run check:source && bun run typecheck && bun run test && bun run build && bun run check:packages && bun run check:source",
-    "ci": "bun run check && bun run coverage && bun run example",
+    "check:examples": "tsc -p examples/tsconfig.json --noEmit",
+    "check": "bun run check:source && bun run typecheck && bun run check:examples && bun run test && bun run build && bun run check:packages && bun run check:source && bun run example",
+    "ci": "bun run check && bun run coverage",
     "version": "changeset version",
     "publish": "bun run build && changeset publish",
     "example": "bun run examples/basic.ts && bun run examples/bun_host.ts"

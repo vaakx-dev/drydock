@@ -20,10 +20,10 @@ interface BunResolverOptions {
 
 ## BunResolver
 
-`BunResolver` is both a callable `PluginResolver` and an object with explicit invalidation.
+`BunResolver` is a `ReloadablePluginResolver` plus the source graph from the last successful bundle.
 
 ```ts
-interface BunResolver {
+interface BunResolver extends ReloadablePluginResolver {
   (specifier: string): Promise<Plugin<unknown>>
   invalidate(specifier: string): void
   dependencies(specifier: string): readonly string[]

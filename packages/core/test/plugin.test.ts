@@ -5,8 +5,10 @@ import {
   ConfigValidationError,
   Context,
   definePlugin,
+  isPlugin,
   mount,
   token,
+  validateConfig,
   type MountState,
 } from "../src/index.js";
 
@@ -148,6 +150,17 @@ test("a service cannot be both required and optional", () => {
     optional: [service],
     setup() {},
   }), /duplicate service dependencies/u);
+});
+
+test("isPlugin accepts plugin objects and rejects other values", () => {
+  assert.equal(isPlugin({ name: "ok", setup() {} }), true);
+  assert.equal(isPlugin({ name: "ok" }), false);
+  assert.equal(isPlugin(null), false);
+  assert.equal(isPlugin("plugin"), false);
+});
+
+test("validateConfig returns the input when no schema is provided", async () => {
+  assert.equal(await validateConfig(undefined, "ok"), "ok");
 });
 
 test("plugin configuration can be validated and updated in place", async () => {

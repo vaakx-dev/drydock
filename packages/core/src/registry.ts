@@ -4,10 +4,16 @@ import { Observers } from "./observers.js";
 import type { EffectSnapshot } from "./scope.js";
 import type { Token } from "./token.js";
 
+interface PluginRecord {
+  readonly name: string;
+  readonly requires?: readonly Token<unknown>[];
+  readonly optional?: readonly Token<unknown>[];
+}
+
 interface Runtime {
   readonly id: number;
   readonly mounted: MountedPlugin;
-  readonly plugin: Plugin<any, any>;
+  readonly plugin: PluginRecord;
   unsubscribe(): void;
 }
 
@@ -32,11 +38,11 @@ export interface Registry {
   readonly snapshot: RegistrySnapshot;
   get(id: number): MountedPlugin | undefined;
   id(mounted: MountedPlugin): number | undefined;
-  mounts(plugin: Plugin<any, any>): readonly MountedPlugin[];
+  mounts<Config, Input>(plugin: Plugin<Config, Input>): readonly MountedPlugin[];
   restart(id: number): boolean;
-  restartAll(plugin: Plugin<any, any>): number;
+  restartAll<Config, Input>(plugin: Plugin<Config, Input>): number;
   dispose(id: number, reason?: unknown): Promise<boolean>;
-  disposeAll(plugin: Plugin<any, any>, reason?: unknown): Promise<number>;
+  disposeAll<Config, Input>(plugin: Plugin<Config, Input>, reason?: unknown): Promise<number>;
   subscribe(
     listener: (snapshot: RegistrySnapshot) => void,
     onError?: (error: unknown) => void,
@@ -75,7 +81,7 @@ class RuntimeRegistry implements Registry {
     return this.#ids.get(mounted);
   }
 
-  mounts(plugin: Plugin<any, any>): readonly MountedPlugin[] {
+  mounts<Config, Input>(plugin: Plugin<Config, Input>): readonly MountedPlugin[] {
     return [...this.#plugins.get(plugin) ?? []].flatMap((id) => {
       const mounted = this.#runtimes.get(id)?.mounted;
       return mounted ? [mounted] : [];
@@ -89,7 +95,7 @@ class RuntimeRegistry implements Registry {
     return true;
   }
 
-  restartAll(plugin: Plugin<any, any>): number {
+  restartAll<Config, Input>(plugin: Plugin<Config, Input>): number {
     const mounts = this.mounts(plugin);
     for (const mounted of mounts) mounted.restart();
     return mounts.length;
@@ -102,7 +108,7 @@ class RuntimeRegistry implements Registry {
     return true;
   }
 
-  async disposeAll(plugin: Plugin<any, any>, reason?: unknown): Promise<number> {
+  async disposeAll<Config, Input>(plugin: Plugin<Config, Input>, reason?: unknown): Promise<number> {
     const mounts = this.mounts(plugin);
     const results = await Promise.allSettled(mounts.map((mounted) => mounted.dispose(reason)));
     const failures = results.flatMap((result) => (
@@ -121,7 +127,7 @@ class RuntimeRegistry implements Registry {
     return this.#observers.subscribe(listener, onError);
   }
 
-  [REGISTER](mounted: MountedPlugin, plugin: Plugin<any, any>): void {
+  [REGISTER](mounted: MountedPlugin, plugin: PluginRecord): void {
     if (this.#ids.has(mounted)) return;
     const id = this.#nextId;
     this.#nextId += 1;
@@ -173,10 +179,10 @@ function runtimeRegistry(context: Context): RuntimeRegistry {
   return current;
 }
 
-export function registerMount(
+export function registerMount<Config, Input>(
   context: Context,
   mounted: MountedPlugin,
-  plugin: Plugin<any, any>,
+  plugin: Plugin<Config, Input>,
 ): void {
   runtimeRegistry(context)[REGISTER](mounted, plugin);
 }

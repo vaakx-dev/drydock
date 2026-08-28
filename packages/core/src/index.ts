@@ -17,6 +17,7 @@ export { inspect, type RuntimeSnapshot } from "./inspection.js";
 export { token, type Token } from "./token.js";
 export {
   ConfigValidationError,
+  validateConfig,
   type ConfigIssue,
   type ConfigPathSegment,
   type ConfigResult,
@@ -30,6 +31,7 @@ export {
 } from "./registry.js";
 export {
   definePlugin,
+  isPlugin,
   mount,
   type MountedPlugin,
   type MountState,

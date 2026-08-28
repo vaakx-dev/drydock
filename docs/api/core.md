@@ -98,7 +98,11 @@ function token<T>(name: string): Token<T>
 
 ## Plugins
 
-`Plugin` is the definition. `mount()` creates a managed instance in a context. `definePlugin()` validates and freezes a definition.
+`Plugin` is the definition. `mount()` creates a managed instance in a context. `definePlugin()` validates and freezes a definition. `isPlugin()` is the structural guard for values that cross the host or loader boundary.
+
+```ts
+function isPlugin(value: unknown): value is Plugin<unknown>
+```
 
 ```ts
 interface Plugin<Config = undefined, Input = Config> {
@@ -196,11 +200,11 @@ interface Registry {
   readonly snapshot: RegistrySnapshot
   get(id: number): MountedPlugin | undefined
   id(mounted: MountedPlugin): number | undefined
-  mounts(plugin: Plugin<any, any>): readonly MountedPlugin[]
+  mounts<Config, Input>(plugin: Plugin<Config, Input>): readonly MountedPlugin[]
   restart(id: number): boolean
-  restartAll(plugin: Plugin<any, any>): number
+  restartAll<Config, Input>(plugin: Plugin<Config, Input>): number
   dispose(id: number, reason?: unknown): Promise<boolean>
-  disposeAll(plugin: Plugin<any, any>, reason?: unknown): Promise<number>
+  disposeAll<Config, Input>(plugin: Plugin<Config, Input>, reason?: unknown): Promise<number>
   subscribe(listener: (snapshot: RegistrySnapshot) => void, onError?: (error: unknown) => void): () => void
 }
 

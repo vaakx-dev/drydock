@@ -1,4 +1,5 @@
 import {
+  isPlugin,
   mount,
   type Context,
   type MountedPlugin,
@@ -87,9 +88,7 @@ export function snapshotOf(generation: readonly RuntimeEntry[]): LoaderSnapshot 
 }
 
 export function validateDefinition(definition: Definition): void {
-  if (
-    !definition.plugin
-    || typeof definition.plugin.name !== "string"
-    || typeof definition.plugin.setup !== "function"
-  ) throw new Error(`resolved module is not a plugin: ${definition.entry.use}`);
+  if (!isPlugin(definition.plugin)) {
+    throw new Error(`resolved module is not a plugin: ${definition.entry.use}`);
+  }
 }

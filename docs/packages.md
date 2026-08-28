@@ -14,7 +14,7 @@ description: Seven focused packages, one shared runtime model.
 | `@drydock/logger` | Structured contextual logging |
 | `@drydock/timer` | Lifecycle-owned timers |
 
-`@drydock/core` is the base package. Events, loader, logger, and timer build on it. The Bun adapter and HMR watcher build on the loader.
+`@drydock/core` is the base package. Events, loader, logger, timer, and the Bun resolver build on it. The HMR watcher builds on the loader.
 
 ## API reference
 

@@ -1,16 +1,17 @@
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { PluginResolver } from "@drydock/loader";
+import { isPlugin, type Plugin } from "@drydock/core";
+import type { ReloadablePluginResolver } from "@drydock/loader";
 
-type ResolvedPlugin = Awaited<ReturnType<PluginResolver>>;
+type ResolvedPlugin = Plugin<unknown>;
 
 export interface BunResolverOptions {
   readonly external?: readonly string[];
   readonly from?: string | URL;
 }
 
-export interface BunResolver {
+export interface BunResolver extends ReloadablePluginResolver {
   (specifier: string): Promise<ResolvedPlugin>;
   invalidate(specifier: string): void;
   dependencies(specifier: string): readonly string[];
@@ -166,13 +167,4 @@ function pluginExport(value: unknown): ResolvedPlugin | undefined {
   if ("default" in value && isPlugin(value.default)) return value.default;
   if ("plugin" in value && isPlugin(value.plugin)) return value.plugin;
   return undefined;
-}
-
-function isPlugin(value: unknown): value is ResolvedPlugin {
-  return typeof value === "object"
-    && value !== null
-    && "name" in value
-    && typeof value.name === "string"
-    && "setup" in value
-    && typeof value.setup === "function";
 }
