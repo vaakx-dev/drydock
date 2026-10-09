@@ -1,6 +1,6 @@
 {
   "name": "drydock",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "A small plugin kernel for TypeScript: plugins, scoped services, typed events, hot reload",
   "type": "module",
   "repository": {
