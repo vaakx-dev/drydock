@@ -1,5 +1,6 @@
 import type { TraceRecord } from '../events/bus'
 import type { Kind, Status } from '../scope/view'
+import { service } from '../services/token'
 
 export interface ScopeNode {
   id: number
@@ -8,20 +9,24 @@ export interface ScopeNode {
   status: Status
   error?: string
   description?: string
-  inject: string[]
-  uses: Record<string, string>
+  provided: string[]
+  injected: string[]
+  watched: string[]
+  handled: string[]
+  emitted: string[]
+  missing: string[]
   children: ScopeNode[]
 }
 
 export interface ServiceInfo {
   layer: number
-  key: string
+  id: string
   provider: string
   active: boolean
 }
 
 export interface HookInfo {
-  name: string
+  id: string
   handlers: { plugin: string; priority: number }[]
 }
 
@@ -32,8 +37,4 @@ export interface Inspector {
   trace(): TraceRecord[]
 }
 
-declare module '../services/types' {
-  interface Services {
-    inspector: Inspector
-  }
-}
+export const inspector = service<Inspector>('drydock.inspector')

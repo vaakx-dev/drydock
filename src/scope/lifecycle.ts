@@ -1,3 +1,5 @@
+import type { Context, Injects } from '../context/types'
+import { scopeStatus } from '../events/builtin'
 import type { AnyPlugin } from '../plugin/types'
 import { validate } from '../schema/validate'
 import type { Disposers } from './disposers'
@@ -59,11 +61,14 @@ export class Lifecycle {
     } catch (error) {
       return this.crash(error)
     }
+    const clash = Object.keys(plugin.inject ?? {}).find(prop => prop in scope.ctx)
+    if (clash) return this.crash(new Error(`"${clash}" is a ctx method, so it cannot name an injection`))
     if (this.injections.missing().length) return this.setStatus('pending')
     this.injections.capture()
+    scope.usage.reset()
     this.setStatus('starting')
     try {
-      await plugin.apply(scope.ctx, await validate(plugin.config, this.mounted.config))
+      await plugin.apply(scope.ctx as Context<Injects>, await validate(plugin.config, this.mounted.config))
       if (scope.status === 'starting') this.setStatus('active')
     } catch (error) {
       await this.crash(error)
@@ -90,6 +95,6 @@ export class Lifecycle {
 
   private setStatus(status: Status) {
     this.scope.status = status
-    this.scope.app.bus.emit('drydock.status', [this.scope])
+    this.scope.app.bus.emit(scopeStatus.id, [this.scope])
   }
 }

@@ -1,5 +1,4 @@
 import type { AnyPlugin } from '../plugin/types'
-import type { ServiceKey } from '../services/types'
 import type { Source } from '../source/loader'
 
 export type Status = 'pending' | 'starting' | 'active' | 'failed' | 'disposed'
@@ -16,7 +15,7 @@ export interface ScopeView {
   readonly source?: Source
   readonly parent?: ScopeView
   readonly children: ReadonlySet<ScopeView>
-  missing(): ServiceKey[]
+  missing(): string[]
   quiet(): boolean
   idle(): Promise<void>
 }

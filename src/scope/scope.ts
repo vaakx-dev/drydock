@@ -3,7 +3,6 @@ import { createContext } from '../context/create'
 import type { Context, Dispose } from '../context/types'
 import type { AnyPlugin } from '../plugin/types'
 import { Layer } from '../services/layer'
-import type { ServiceKey } from '../services/types'
 import type { Source } from '../source/loader'
 import { Disposers } from './disposers'
 import { Holds } from './holds'
@@ -11,6 +10,7 @@ import { Injections } from './injections'
 import { Lifecycle } from './lifecycle'
 import type { Mount } from './mount'
 import { TaskQueue } from './queue'
+import { Usage } from './usage'
 import type { Kind, ScopeView, Status } from './view'
 
 export type { Mount } from './mount'
@@ -23,6 +23,7 @@ export class Scope implements ScopeView {
   readonly id = ++ids
   readonly ctx: Context
   readonly children = new Set<Scope>()
+  readonly usage = new Usage()
   status: Status
   error?: unknown
   plugin?: AnyPlugin
@@ -44,7 +45,9 @@ export class Scope implements ScopeView {
     this.plugin = mounted.plugin
     this.status = this.kind === 'plugin' ? 'pending' : 'active'
     this.holds = new Holds(() => app.release())
-    this.injections = new Injections(layer, () => this.plugin?.inject ?? [])
+    this.injections = new Injections(layer, () => [
+      ...new Set(Object.values(this.plugin?.inject ?? {}).map(token => token.id)),
+    ])
     this.lifecycle = new Lifecycle(this, mounted, this.disposers, this.injections)
     this.queue = new TaskQueue(error => app.report(this, error))
     this.ctx = createContext(this)
@@ -86,8 +89,17 @@ export class Scope implements ScopeView {
     return this.injections.missing()
   }
 
-  injects(key: ServiceKey) {
-    return this.injections.includes(key)
+  injects(id: string) {
+    return this.injections.includes(id)
+  }
+
+  injectedIds() {
+    return this.injections.ids()
+  }
+
+  injection(prop: string) {
+    const inject = this.plugin?.inject
+    return inject && Object.hasOwn(inject, prop) ? inject[prop] : undefined
   }
 
   mount(mount: Mount) {

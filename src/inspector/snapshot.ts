@@ -11,20 +11,24 @@ export const tree = (scope: Scope): ScopeNode => ({
   status: scope.status,
   ...(scope.error === undefined ? {} : { error: message(scope.error) }),
   ...(scope.plugin?.description === undefined ? {} : { description: scope.plugin.description }),
-  inject: [...(scope.plugin?.inject ?? [])],
-  uses: { ...scope.plugin?.uses },
+  provided: [...scope.usage.provided],
+  injected: scope.injectedIds(),
+  watched: [...scope.usage.watched],
+  handled: [...scope.usage.handled],
+  emitted: [...scope.usage.emitted],
+  missing: scope.missing(),
   children: [...scope.children].map(tree),
 })
 
 export const services = (app: App): ServiceInfo[] => {
   const layers = new Set([...app.scopes].map(scope => scope.layer))
   return [...layers].flatMap(layer =>
-    layer.list().map(({ key, scope, active }) => ({ layer: layer.id, key, provider: scope.name, active })),
+    layer.list().map(({ id, scope, active }) => ({ layer: layer.id, id, provider: scope.name, active })),
   )
 }
 
 export const hooks = (app: App): HookInfo[] =>
-  app.bus.names().map(name => ({
-    name,
-    handlers: app.bus.list(name).map(hook => ({ plugin: hook.scope.name, priority: hook.priority })),
+  app.bus.ids().map(id => ({
+    id,
+    handlers: app.bus.list(id).map(hook => ({ plugin: hook.scope.name, priority: hook.priority })),
   }))

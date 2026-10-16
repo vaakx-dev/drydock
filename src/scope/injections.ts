@@ -1,31 +1,30 @@
 import type { Layer } from '../services/layer'
-import type { ServiceKey } from '../services/types'
 
 export class Injections {
-  private resolved = new Map<ServiceKey, unknown>()
+  private resolved = new Map<string, unknown>()
 
   constructor(
     private layer: Layer,
-    private keys: () => readonly ServiceKey[],
+    readonly ids: () => string[],
   ) {}
 
   missing() {
-    return this.keys().filter(key => this.layer.resolve(key) === undefined)
+    return this.ids().filter(id => this.layer.resolve(id) === undefined)
   }
 
-  includes(key: ServiceKey) {
-    return this.keys().includes(key)
+  includes(id: string) {
+    return this.ids().includes(id)
   }
 
   current() {
-    return this.keys().every(key => {
-      const impl = this.layer.resolve(key)
-      return impl !== undefined && impl === this.resolved.get(key)
+    return this.ids().every(id => {
+      const impl = this.layer.resolve(id)
+      return impl !== undefined && impl === this.resolved.get(id)
     })
   }
 
   capture() {
-    this.resolved = new Map(this.keys().map(key => [key, this.layer.resolve(key)]))
+    this.resolved = new Map(this.ids().map(id => [id, this.layer.resolve(id)]))
   }
 
   clear() {

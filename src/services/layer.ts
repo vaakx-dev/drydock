@@ -1,9 +1,8 @@
 import type { App } from '../app/app'
 import type { Scope } from '../scope/scope'
-import type { ServiceKey, Services } from './types'
 
 export interface Provision {
-  key: ServiceKey
+  id: string
   impl: unknown
   scope: Scope
 }
@@ -12,29 +11,29 @@ let ids = 0
 
 export class Layer {
   readonly id = ++ids
-  private provisions = new Map<ServiceKey, Provision[]>()
+  private provisions = new Map<string, Provision[]>()
 
   constructor(
     private app: App,
     readonly parent?: Layer,
   ) {}
 
-  resolve<K extends ServiceKey>(key: K): Services[K] | undefined {
+  resolve(id: string): unknown {
     for (let layer: Layer | undefined = this; layer; layer = layer.parent) {
-      const top = layer.provisions.get(key)?.at(-1)
-      if (top) return top.impl as Services[K]
+      const top = layer.provisions.get(id)?.at(-1)
+      if (top) return top.impl
     }
   }
 
-  provide(key: ServiceKey, impl: unknown, scope: Scope) {
-    const provision = { key, impl, scope }
-    this.provisions.set(key, [...(this.provisions.get(key) ?? []), provision])
-    this.app.changed(this, key)
+  provide(id: string, impl: unknown, scope: Scope) {
+    const provision = { id, impl, scope }
+    this.provisions.set(id, [...(this.provisions.get(id) ?? []), provision])
+    this.app.changed(this, id)
     return () => {
-      const rest = (this.provisions.get(key) ?? []).filter(entry => entry !== provision)
-      if (rest.length) this.provisions.set(key, rest)
-      else this.provisions.delete(key)
-      this.app.changed(this, key)
+      const rest = (this.provisions.get(id) ?? []).filter(entry => entry !== provision)
+      if (rest.length) this.provisions.set(id, rest)
+      else this.provisions.delete(id)
+      this.app.changed(this, id)
     }
   }
 

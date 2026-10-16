@@ -1,22 +1,24 @@
-import type { Args, EventName, Handler, HookOptions, Result } from '../events/types'
+import type { Event, Signature } from '../events/token'
+import type { Args, Handler, HookOptions, Result } from '../events/types'
 import type { AnyPlugin } from '../plugin/types'
 import type { Scope, ScopeView } from '../scope/view'
-import type { ServiceKey, Services } from '../services/types'
+import type { Implementation, Service } from '../services/token'
 
 export type Dispose = () => void | Promise<void>
 
 export interface ContextCore {
   readonly scope: ScopeView
   readonly hot: { data: Record<string, unknown> }
-  provide<K extends ServiceKey>(key: K, impl: Services[K]): Dispose
-  watch<K extends ServiceKey>(key: K, use: (impl: Services[K] | undefined) => Dispose | void): Dispose
+  provide<T>(token: Service<T>, impl: NoInfer<T>): Dispose
+  get<T>(token: Service<T>): T | undefined
+  watch<T>(token: Service<T>, use: (impl: T | undefined) => Dispose | void): Dispose
   plugin(plugin: AnyPlugin, config?: unknown): Scope
   load(path: string, config?: unknown): Scope
   layer(): Context
-  on<K extends EventName>(name: K, handler: Handler<K>, options?: HookOptions): Dispose
-  emit<K extends EventName>(name: K, ...args: Args<K>): void
-  waterfall<K extends EventName>(name: K, ...args: Args<K>): Promise<Result<K>>
-  bail<K extends EventName>(name: K, ...args: Args<K>): Promise<Result<K> | undefined>
+  on<F extends Signature>(event: Event<F>, handler: NoInfer<Handler<F>>, options?: HookOptions): Dispose
+  emit<F extends Signature>(event: Event<F>, ...args: NoInfer<Args<F>>): void
+  waterfall<F extends Signature>(event: Event<F>, ...args: NoInfer<Args<F>>): Promise<Result<F>>
+  bail<F extends Signature>(event: Event<F>, ...args: NoInfer<Args<F>>): Promise<Result<F> | undefined>
   effect(setup: () => Dispose | void): Dispose
   busy(): Dispose
   report(error: unknown): void
@@ -26,12 +28,6 @@ export interface ContextCore {
   dispose(): Promise<void>
 }
 
-type Free<Taken extends never> = Taken
+export type Injects = { readonly [prop: string]: Service<any> }
 
-export type ServiceNamesAvoidCore = Free<Extract<ServiceKey, keyof ContextCore>>
-
-export type Context<I extends ServiceKey = never> = ContextCore & {
-  readonly [K in I]: Services[K]
-} & {
-  readonly [K in Exclude<ServiceKey, I>]?: Services[K]
-}
+export type Context<I extends Injects = {}> = ContextCore & { readonly [K in keyof I]: Implementation<I[K]> }

@@ -10,13 +10,13 @@ Everything a plugin registers belongs to that plugin: services, event handlers, 
 
 When a plugin throws, drydock marks it as failed, reports the error, and keeps the other plugins running. The inspector shows every plugin, its status, and the last 1,000 events.
 
-You declare services and events once, and TypeScript checks every call that provides, injects or handles them.
+Services and events are tokens: plain values with an id and a type, made with `service<T>(id)` and `event<F>(id)`. TypeScript checks every call that provides, injects, handles or emits them, and the inspector shows which tokens each plugin used.
 
-drydock is 1,104 lines of TypeScript with no dependencies. The coding agent [sand](https://github.com/vaakx-dev/sand) is built on it: all 68 of sand's parts are drydock plugins, and sand loads plugins it writes for itself mid-conversation.
+drydock is 1,160 lines of TypeScript with no dependencies. The coding agent [sand](https://github.com/vaakx-dev/sand) is built on it: all 68 of sand's parts are drydock plugins, and sand loads plugins it writes for itself mid-conversation.
 
 ## Get started
 
-drydock ships as TypeScript source, so you need Bun. Install it with `bun add github:vaakx-dev/drydock`. For the browser, import `drydock/browser`, which is the same kernel without loading plugins from disk. Then read [Concepts](docs/concepts.md), which covers contexts, plugins, services, events, layers and the inspector.
+drydock ships as TypeScript source, so you need Bun. Install it with `bun add github:vaakx-dev/drydock`. For the browser, import `drydock/browser`, which is the same kernel without loading plugins from disk. Then read [Concepts](docs/concepts.md), which covers tokens, contexts, plugins, services, events, layers and the inspector.
 
 ## Versions
 

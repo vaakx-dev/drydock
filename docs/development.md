@@ -2,7 +2,7 @@
 
 ## Run the checks
 
-Run `bun install` once, then run `bun run check` before you push. It type-checks the source with strict settings. CI runs the same check on every push.
+Run `bun install` once, then run `bun run check` before you push. It type-checks the source with strict settings, then runs the tests in `test/`. CI runs the same check on every push.
 
 ## Release a version
 

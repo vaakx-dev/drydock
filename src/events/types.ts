@@ -1,19 +1,10 @@
-import type { ScopeView } from '../scope/view'
+import type { Signature } from './token'
 
-export interface Events {
-  'drydock.status': (scope: ScopeView) => void
-  'drydock.error': (scope: ScopeView, error: unknown) => void
-}
+export type Args<F extends Signature> = Parameters<F>
 
-export type EventName = keyof Events & string
+export type Result<F extends Signature> = Awaited<ReturnType<F>>
 
-type Fn<K extends EventName> = Events[K] extends (...args: any[]) => any ? Events[K] : never
-
-export type Args<K extends EventName> = Parameters<Fn<K>>
-
-export type Result<K extends EventName> = Awaited<ReturnType<Fn<K>>>
-
-export type Handler<K extends EventName> = (...args: Args<K>) => Result<K> | void | Promise<Result<K> | void>
+export type Handler<F extends Signature> = (...args: Args<F>) => Result<F> | void | Promise<Result<F> | void>
 
 export interface HookOptions {
   priority?: number

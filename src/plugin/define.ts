@@ -1,7 +1,7 @@
-import type { ServiceKey } from '../services/types'
+import type { Injects } from '../context/types'
 import type { AnyPlugin, Plugin } from './types'
 
-export const definePlugin = <C = undefined, const I extends ServiceKey = never>(plugin: Plugin<C, I>) => plugin
+export const definePlugin = <C = undefined, I extends Injects = {}>(plugin: Plugin<C, I>) => plugin
 
 export const isPlugin = (value: unknown): value is AnyPlugin =>
   typeof value === 'object' &&

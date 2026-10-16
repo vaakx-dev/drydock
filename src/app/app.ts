@@ -1,7 +1,7 @@
+import { scopeError } from '../events/builtin'
 import { Bus } from '../events/bus'
 import { Scope } from '../scope/scope'
 import { Layer } from '../services/layer'
-import type { ServiceKey } from '../services/types'
 import type { Watcher } from '../services/watcher'
 import type { Loader } from '../source/loader'
 
@@ -17,9 +17,9 @@ export class App {
     this.root = new Scope(this, undefined, new Layer(this))
   }
 
-  changed(layer: Layer, key: ServiceKey) {
-    for (const scope of this.scopes) if (scope.injects(key) && scope.layer.within(layer)) scope.sync()
-    for (const watcher of [...this.watchers]) if (this.watchers.has(watcher) && watcher.sees(layer, key)) watcher.fire()
+  changed(layer: Layer, id: string) {
+    for (const scope of this.scopes) if (scope.injects(id) && scope.layer.within(layer)) scope.sync()
+    for (const watcher of [...this.watchers]) if (this.watchers.has(watcher) && watcher.sees(layer, id)) watcher.fire()
   }
 
   async settled() {
@@ -48,7 +48,7 @@ export class App {
   }
 
   report(scope: Scope, error: unknown) {
-    if (this.bus.has('drydock.error')) this.bus.emit('drydock.error', [scope, error])
+    if (this.bus.has(scopeError.id)) this.bus.emit(scopeError.id, [scope, error])
     else console.error(`[drydock] ${scope.name}:`, error)
   }
 }

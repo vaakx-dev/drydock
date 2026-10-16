@@ -1,5 +1,4 @@
 import type { Scope } from '../scope/scope'
-import type { ServiceKey } from '../services/types'
 import { Watcher } from '../services/watcher'
 import type { Context, ContextCore, Dispose } from './types'
 
@@ -12,7 +11,7 @@ export const scopeOf = (ctx: ContextCore) => {
 }
 
 export const createContext = (scope: Scope): Context => {
-  const { app } = scope
+  const { app, usage } = scope
 
   const own = (dispose: Dispose) => {
     const untrack = scope.track(dispose)
@@ -20,6 +19,11 @@ export const createContext = (scope: Scope): Context => {
       untrack()
       return dispose()
     }
+  }
+
+  const emitted = (id: string) => {
+    usage.emitted.add(id)
+    return id
   }
 
   const reload = async (target: unknown) => {
@@ -35,12 +39,14 @@ export const createContext = (scope: Scope): Context => {
     get hot() {
       return scope.hot
     },
-    provide(key, impl) {
-      if (key in core) throw new Error(`"${key}" is a ctx method, so it cannot name a service`)
-      return own(scope.layer.provide(key, impl, scope))
+    provide(token, impl) {
+      usage.provided.add(token.id)
+      return own(scope.layer.provide(token.id, impl, scope))
     },
-    watch(key, use) {
-      const watcher = new Watcher(scope, key, use)
+    get: token => scope.layer.resolve(token.id) as never,
+    watch(token, use) {
+      usage.watched.add(token.id)
+      const watcher = new Watcher(scope, token.id, use)
       app.watchers.add(watcher)
       const dispose = own(() => {
         app.watchers.delete(watcher)
@@ -52,10 +58,13 @@ export const createContext = (scope: Scope): Context => {
     plugin: (plugin, config) => scope.mount({ plugin, config }),
     load: (path, config) => scope.mount({ path, config }),
     layer: () => scope.branch().ctx,
-    on: (name, handler, options) => own(app.bus.on(name, handler, scope, options)),
-    emit: (name, ...args) => app.bus.emit(name, args),
-    waterfall: (name, ...args) => app.bus.waterfall(name, args) as never,
-    bail: (name, ...args) => app.bus.bail(name, args) as never,
+    on(event, handler, options) {
+      usage.handled.add(event.id)
+      return own(app.bus.on(event.id, handler, scope, options))
+    },
+    emit: (event, ...args) => app.bus.emit(emitted(event.id), args),
+    waterfall: (event, ...args) => app.bus.waterfall(emitted(event.id), args) as never,
+    bail: (event, ...args) => app.bus.bail(emitted(event.id), args) as never,
     effect: setup => own(setup() ?? (() => {})),
     busy: () => own(scope.hold()),
     report: error => app.report(scope, error),
@@ -66,10 +75,11 @@ export const createContext = (scope: Scope): Context => {
   }
 
   const ctx = new Proxy(core, {
-    get: (target, key, receiver) =>
-      key in target || typeof key !== 'string'
-        ? Reflect.get(target, key, receiver)
-        : scope.layer.resolve(key as ServiceKey),
+    get(target, key, receiver) {
+      if (key in target || typeof key !== 'string') return Reflect.get(target, key, receiver)
+      const token = scope.injection(key)
+      return token && scope.layer.resolve(token.id)
+    },
   }) as Context
   owners.set(ctx, scope)
   return ctx

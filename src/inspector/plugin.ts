@@ -2,11 +2,11 @@ import type { TraceRecord } from '../events/bus'
 import { scopeOf } from '../context/create'
 import { definePlugin } from '../plugin/define'
 import { hooks, services, tree } from './snapshot'
-import './types'
+import { inspector } from './types'
 
 const limit = 1000
 
-export const inspector = definePlugin({
+export const inspectorPlugin = definePlugin({
   name: 'inspector',
   apply(ctx) {
     const { app } = scopeOf(ctx)
@@ -17,7 +17,7 @@ export const inspector = definePlugin({
         if (records.length > limit) records.shift()
       }),
     )
-    ctx.provide('inspector', {
+    ctx.provide(inspector, {
       tree: () => tree(app.root),
       services: () => services(app),
       hooks: () => hooks(app),
